@@ -7,6 +7,13 @@ local function set_texture_rect(bitmap, x, y, w, h)
 	bitmap:set_texture_rect(x * x_ratio, y * y_ratio, w * x_ratio, h * y_ratio)
 end
 
+local language_font_overrides = {
+	schinese = tweak_data.menu.pd2_medium_font,
+	japanese = tweak_data.menu.pd2_medium_font,
+	korean = tweak_data.menu.pd2_medium_font
+}
+local font_override = language_font_overrides[HopLib:get_game_language()]
+
 function EnemyHealthBar:init(panel, unit)
 	self._unit = unit
 
@@ -28,7 +35,7 @@ function EnemyHealthBar:init(panel, unit)
 	local name = self._panel:text({
 		layer = 2,
 		text = FloatingHealthbars.settings.allcaps and unit_name:upper() or unit_name,
-		font = tweak_data.menu.default_font,
+		font = font_override or tweak_data.menu.medium_font,
 		font_size = FloatingHealthbars.settings.name_size * scale,
 		color = Color.white
 	})
