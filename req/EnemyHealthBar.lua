@@ -253,11 +253,12 @@ function EnemyHealthBar:update_hp()
 		return
 	end
 
-	local ratio = self._unit:character_damage():health_ratio()
+	local dmg = self._unit:character_damage()
+	local ratio = dmg:health_ratio()
 	self._hp_center:stop()
 	self._hp_center:animate(callback(self, self, "_anim_hp_change"), self._hp_left, self._hp_right, self._health_ratio or 0, ratio)
 
-	if ratio <= 0 or self._unit:character_damage()._dead then
+	if ratio <= 0 or dmg._dead then
 		self._hp_panel:stop()
 		self._hp_panel:animate(callback(self, self, "_anim_hp_fade"), self._hp_panel:alpha())
 	end

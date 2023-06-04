@@ -4,8 +4,8 @@ Hooks:PostHook(HUDManager, "init_finalize", "init_finalize_enemy_health_bars", f
 
 	self._next_unit_raycast_t = 0
 
-	self._unit_slotmask_no_walls = managers.slot:get_mask("persons") - managers.slot:get_mask("all_criminals")
-	self._unit_slotmask = self._unit_slotmask_no_walls + managers.slot:get_mask("bullet_blank_impact_targets")
+	self._unit_slotmask = managers.slot:get_mask("bullet_impact_targets") - managers.slot:get_mask("all_criminals", "corpses")
+	self._unit_slotmask_no_walls = self._unit_slotmask - managers.slot:get_mask("bullet_blank_impact_targets")
 end)
 
 local mvec_add = mvector3.add
@@ -44,7 +44,8 @@ Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self,
 		self._unit_healthbar = nil
 	end
 
-	if not self._unit_healthbar and unit and unit:character_damage() and not unit:character_damage()._dead then
+	local dmg = alive(unit) and unit:character_damage()
+	if not self._unit_healthbar and dmg and dmg.health_ratio and not dmg._dead then
 		self._unit_healthbar = unit:unit_data()._healthbar or EnemyHealthBar:new(self._healthbar_panel, unit)
 		self._unit_healthbar:show()
 	end
