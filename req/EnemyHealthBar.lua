@@ -7,13 +7,6 @@ local function set_texture_rect(bitmap, x, y, w, h)
 	bitmap:set_texture_rect(x * x_ratio, y * y_ratio, w * x_ratio, h * y_ratio)
 end
 
-local language_font_overrides = {
-	schinese = tweak_data.menu.pd2_medium_font,
-	japanese = tweak_data.menu.pd2_medium_font,
-	korean = tweak_data.menu.pd2_medium_font
-}
-local font_override = language_font_overrides[HopLib:get_game_language()]
-
 function EnemyHealthBar:init(panel, unit)
 	self._unit = unit
 
@@ -33,9 +26,9 @@ function EnemyHealthBar:init(panel, unit)
 	local unit_info = HopLib and HopLib:unit_info_manager():get_info(unit)
 	local unit_name = unit_info and unit_info:nickname() or (unit:base()._tweak_table or "Unknown"):pretty()
 	local name = self._panel:text({
-		layer = 2,
+		layer = 3,
 		text = FloatingHealthbars.settings.allcaps and unit_name:upper() or unit_name,
-		font = font_override or tweak_data.menu.medium_font,
+		font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1],
 		font_size = FloatingHealthbars.settings.name_size * scale,
 		color = Color.white
 	})
@@ -151,6 +144,8 @@ function EnemyHealthBar:init(panel, unit)
 	local y_off = FloatingHealthbars.settings.name_y_offset * (name:h() + self._hp_panel:h()) * 0.5
 	name:set_center(center_x + x_off, center_y + y_off)
 
+	self:_check_create_text_outline(name)
+
 	self._panel:set_h(math.max(self._hp_panel:bottom(), name:bottom()))
 
 	local events = {}
@@ -176,6 +171,32 @@ function EnemyHealthBar:init(panel, unit)
 	self:update_hp()
 end
 
+function EnemyHealthBar:_check_create_text_outline(text)
+	if not FloatingHealthbars.settings.outline then
+		return
+	end
+
+	local offset = math.ceil(text:font_size() / 16)
+	local font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1]
+	for x = -offset, offset do
+		for y = -offset, offset do
+			if x ~= 0 or y ~= 0 then
+				self._panel:text({
+					layer = text:layer() - 1,
+					text = text:text(),
+					font = font,
+					font_size = text:font_size(),
+					color = Color.black,
+					w = text:w(),
+					h = text:h(),
+					x = text:x() + x,
+					y = text:y() + y,
+				})
+			end
+		end
+	end
+end
+
 function EnemyHealthBar:_anim_fade_panel(panel, start_alpha, alpha, done_cb)
 	over(math.abs(alpha - start_alpha) * self.PANEL_FADE_TIME, function (t)
 		panel:set_alpha(math.lerp(start_alpha, alpha, t))
@@ -191,7 +212,7 @@ function EnemyHealthBar:_anim_hp_change(hp_center, hp_left, hp_right, start_rati
 		hp_center:set_w(math.round(self._health_width * self._health_ratio))
 		if FloatingHealthbars.settings.fill_direction == 1 then
 			hp_center:set_x(math.round(self._health_height))
-		elseif FloatingHealthbars.settings.fill_direction == 1 then
+		elseif FloatingHealthbars.settings.fill_direction == 2 then
 			hp_center:set_right(math.round(self._health_height + self._health_width))
 		else
 			hp_center:set_center_x(math.round(self._health_height + self._health_width * 0.5))

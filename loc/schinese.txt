@@ -16,5 +16,11 @@
 	"menu_floating_healthbars_name_x_offset" : "名字水平偏移",
 	"menu_floating_healthbars_name_x_offset_desc" : "从血条的中心位置为基准调整名字水平方向的偏移",
 	"menu_floating_healthbars_name_y_offset" : "名字垂直偏移",
-	"menu_floating_healthbars_name_y_offset_desc" : "从血条的中心位置为基准调整名字垂直方向的偏移"
+	"menu_floating_healthbars_name_y_offset_desc" : "从血条的中心位置为基准调整名字垂直方向的偏移",
+	"menu_floating_healthbars_font" : "Font",
+	"menu_floating_healthbars_font_1" : "Default",
+	"menu_floating_healthbars_font_2" : "Eurostile",
+	"menu_floating_healthbars_font_3" : "Diesel",
+	"menu_floating_healthbars_font_4" : "System",
+	"menu_floating_healthbars_outline" : "Text outline"
 }
