@@ -25,19 +25,29 @@ function EnemyHealthBar:init(panel, unit)
 
 	local unit_info = HopLib and HopLib:unit_info_manager():get_info(unit)
 	local unit_name = unit_info and unit_info:nickname() or (unit:base()._tweak_table or "Unknown"):pretty()
-	local name = self._panel:text({
+	self._name_text = self._panel:text({
 		layer = 3,
 		text = FloatingHealthbars.settings.allcaps and unit_name:upper() or unit_name,
 		font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1],
 		font_size = FloatingHealthbars.settings.name_size * scale,
 		color = Color.white
 	})
-	local _, _, w, h = name:text_rect()
-	name:set_size(w, h)
+	local _, _, w, h = self._name_text:text_rect()
+	self._name_text:set_size(w, h)
+
+	self._hp_text = self._panel:text({
+		layer = 3,
+		text = "80/80",
+		font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1],
+		font_size = FloatingHealthbars.settings.hp_size * scale,
+		color = Color.white
+	})
+	local _, _, w, h = self._hp_text:text_rect()
+	self._hp_text:set_size(w, h)
 
 	local healthbar_path = FloatingHealthbars.variants[FloatingHealthbars.settings.variant] or FloatingHealthbars.variants.default
 
-	self._health_width = math.round(math.max(FloatingHealthbars.settings.width_by_text and name:w() or scale * FloatingHealthbars.settings.width, 8))
+	self._health_width = math.round(math.max(FloatingHealthbars.settings.width_by_text and self._name_text:w() or scale * FloatingHealthbars.settings.width, 8))
 	self._health_height = math.round(scale * math.max(FloatingHealthbars.settings.height, 8))
 
 	-- Background
@@ -140,13 +150,17 @@ function EnemyHealthBar:init(panel, unit)
 	fg:set_center(center_x, center_y)
 	self._hp_panel:set_center(center_x, center_y)
 
-	local x_off = name:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.name_x_offset * (self._hp_center:w() - name:w()) * 0.5
-	local y_off = FloatingHealthbars.settings.name_y_offset * (name:h() + self._hp_panel:h()) * 0.5
-	name:set_center(center_x + x_off, center_y + y_off)
+	local x_off = self._name_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.name_x_offset * (self._hp_center:w() - self._name_text:w()) * 0.5
+	local y_off = FloatingHealthbars.settings.name_y_offset * (self._name_text:h() + self._hp_panel:h()) * 0.5
+	self._name_text:set_center(center_x + x_off, center_y + y_off)
 
-	self:_check_create_text_outline(name)
+	local x_off = self._hp_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.hp_x_offset * (self._hp_center:w() - self._hp_text:w()) * 0.5
+	local y_off = FloatingHealthbars.settings.hp_y_offset * (self._hp_text:h() + self._hp_panel:h()) * 0.5
+	self._hp_text:set_center(center_x + x_off, center_y + y_off)
 
-	self._panel:set_h(math.max(self._hp_panel:bottom(), name:bottom()))
+	self:_update_outline(self._name_text)
+
+	self._panel:set_h(math.max(self._hp_panel:bottom(), self._name_text:bottom(), self._hp_text:bottom()))
 
 	local events = {}
 	for _, v in pairs(CopDamage._all_event_types) do
@@ -171,30 +185,36 @@ function EnemyHealthBar:init(panel, unit)
 	self:update_hp()
 end
 
-function EnemyHealthBar:_check_create_text_outline(text)
-	if not FloatingHealthbars.settings.outline then
+function EnemyHealthBar:_update_outline(text)
+	if not FloatingHealthbars.settings.outline or text:font_size() <= 0 then
 		return
 	end
 
-	local offset = math.ceil(text:font_size() / 16)
-	local font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1]
+	self._outlines = self._outlines or {}
+
+	local texts = self._outlines[text:key()] or {}
+	local i = 1
+
+	local offset = math.ceil(text:font_size() / 20)
 	for x = -offset, offset do
 		for y = -offset, offset do
 			if x ~= 0 or y ~= 0 then
-				self._panel:text({
+				local t = texts[i] or self._panel:text({
 					layer = text:layer() - 1,
-					text = text:text(),
-					font = font,
-					font_size = text:font_size(),
-					color = Color.black,
-					w = text:w(),
-					h = text:h(),
-					x = text:x() + x,
-					y = text:y() + y,
+					color = Color.black
 				})
+				t:set_text(text:text())
+				t:set_font(text:font())
+				t:set_font_size(text:font_size())
+				t:set_shape(text:x() + x, text:y() + y, text:w(), text:h())
+
+				texts[i] = t
+				i = i + 1
 			end
 		end
 	end
+
+	self._outlines[text:key()] = texts
 end
 
 function EnemyHealthBar:_anim_fade_panel(panel, start_alpha, alpha, done_cb)
@@ -283,6 +303,19 @@ function EnemyHealthBar:update_hp()
 		self._hp_panel:stop()
 		self._hp_panel:animate(callback(self, self, "_anim_hp_fade"), self._hp_panel:alpha())
 	end
+
+	if FloatingHealthbars.settings.hp_size <= 0 then
+		return
+	end
+
+	self._hp_text:set_text(string.format("%d / %d", math.max(0, dmg._health) * 10, math.max(0, dmg._HEALTH_INIT) * 10))
+	local _, _, w = self._hp_text:text_rect()
+	self._hp_text:set_w(w)
+
+	local x_off = self._hp_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.hp_x_offset * (self._hp_center:w() - self._hp_text:w()) * 0.5
+	self._hp_text:set_center_x(math.round(self._panel:w() * 0.5) + x_off)
+
+	self:_update_outline(self._hp_text)
 end
 
 function EnemyHealthBar:alive()
