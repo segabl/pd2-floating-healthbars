@@ -9,6 +9,8 @@ end
 
 function EnemyHealthBar:init(panel, unit)
 	self._unit = unit
+	self._ext_damage = unit:character_damage()
+	self._ext_movement = unit:movement()
 
 	self._panel = panel:panel({
 		alpha = 0,
@@ -23,7 +25,7 @@ function EnemyHealthBar:init(panel, unit)
 		scale = math.min(math.max(1, (unit:character_damage()._HEALTH_INIT or 4) / (tweak_data.character.swat.HEALTH_INIT * 0.5)) ^ 0.15, 2)
 	end
 
-	local unit_info = HopLib and HopLib:unit_info_manager():get_info(unit)
+	local unit_info = HopLib:unit_info_manager():get_info(unit)
 	local unit_name = unit_info and unit_info:nickname() or (unit:base()._tweak_table or "Unknown"):pretty()
 	self._name_text = self._panel:text({
 		layer = 3,
@@ -37,7 +39,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	self._hp_text = self._panel:text({
 		layer = 3,
-		text = "80/80",
+		text = "80 / 80",
 		font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1],
 		font_size = FloatingHealthbars.settings.hp_size * scale,
 		color = Color.white
@@ -162,27 +164,16 @@ function EnemyHealthBar:init(panel, unit)
 
 	self._panel:set_h(math.max(self._hp_panel:bottom(), self._name_text:bottom(), self._hp_text:bottom()))
 
-	local events = {}
-	for _, v in pairs(CopDamage._all_event_types) do
-		events[v] = true
-	end
-	for _, v in pairs(CopDamage._ATTACK_VARIANTS) do
-		events[v] = true
-	end
-
 	unit:unit_data()._healthbar = self
 
 	self._key = "health_bar" .. tostring(unit:key())
 
-	if unit:character_damage().add_listener then
-		unit:character_damage():add_listener(self._key, table.map_keys(events), callback(self, self, "update_hp"))
-	end
 	if unit:base().add_destroy_listener then
 		unit:base():add_destroy_listener(self._key, callback(self, self, "destroy"))
 	end
 	managers.hud:add_updator(self._key, callback(self, self, "update"))
 
-	self:update_hp()
+	self:_update_hp()
 end
 
 function EnemyHealthBar:_update_outline(text)
@@ -248,6 +239,40 @@ function EnemyHealthBar:_anim_hp_fade(hp_panel, start_alpha)
 	end)
 end
 
+function EnemyHealthBar:_update_hp()
+	if not self:alive() then
+		return
+	end
+
+	local ratio = self._ext_damage:health_ratio()
+	if self._target_health_ratio == ratio then
+		return
+	end
+
+	self._target_health_ratio = ratio
+
+	self._hp_center:stop()
+	self._hp_center:animate(callback(self, self, "_anim_hp_change"), self._hp_left, self._hp_right, self._health_ratio or 0, ratio)
+
+	if ratio <= 0 or self._ext_damage._dead then
+		self._hp_panel:stop()
+		self._hp_panel:animate(callback(self, self, "_anim_hp_fade"), self._hp_panel:alpha())
+	end
+
+	if FloatingHealthbars.settings.hp_size <= 0 then
+		return
+	end
+
+	self._hp_text:set_text(string.format("%d / %d", math.max(0, self._ext_damage._health) * 10, math.max(0, self._ext_damage._HEALTH_INIT) * 10))
+	local _, _, w = self._hp_text:text_rect()
+	self._hp_text:set_w(w)
+
+	local x_off = self._hp_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.hp_x_offset * (self._hp_center:w() - self._hp_text:w()) * 0.5
+	self._hp_text:set_center_x(math.round(self._panel:w() * 0.5) + x_off)
+
+	self:_update_outline(self._hp_text)
+end
+
 function EnemyHealthBar:show()
 	if not self:alive() then
 		return
@@ -276,8 +301,7 @@ function EnemyHealthBar:update(t, dt)
 	local cam = managers.viewport:get_current_camera()
 
 	if cam then
-		local movement = self._unit:movement()
-		local pos = movement._obj_head and movement._obj_head:position() or movement:m_head_pos()
+		local pos = self._ext_movement._obj_head and self._ext_movement._obj_head:position() or self._ext_movement:m_head_pos()
 
 		mvector3.set(tmp_vec, pos)
 		mvector3.add_scaled(tmp_vec, math.UP, 30)
@@ -287,35 +311,8 @@ function EnemyHealthBar:update(t, dt)
 		self._panel:set_bottom(math.round(screen_pos.y + mvector3.distance(cam:position(), pos) / 1000))
 		self._panel:set_visible(screen_pos.z > 0)
 	end
-end
 
-function EnemyHealthBar:update_hp()
-	if not self:alive() then
-		return
-	end
-
-	local dmg = self._unit:character_damage()
-	local ratio = dmg:health_ratio()
-	self._hp_center:stop()
-	self._hp_center:animate(callback(self, self, "_anim_hp_change"), self._hp_left, self._hp_right, self._health_ratio or 0, ratio)
-
-	if ratio <= 0 or dmg._dead then
-		self._hp_panel:stop()
-		self._hp_panel:animate(callback(self, self, "_anim_hp_fade"), self._hp_panel:alpha())
-	end
-
-	if FloatingHealthbars.settings.hp_size <= 0 then
-		return
-	end
-
-	self._hp_text:set_text(string.format("%d / %d", math.max(0, dmg._health) * 10, math.max(0, dmg._HEALTH_INIT) * 10))
-	local _, _, w = self._hp_text:text_rect()
-	self._hp_text:set_w(w)
-
-	local x_off = self._hp_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.hp_x_offset * (self._hp_center:w() - self._hp_text:w()) * 0.5
-	self._hp_text:set_center_x(math.round(self._panel:w() * 0.5) + x_off)
-
-	self:_update_outline(self._hp_text)
+	self:_update_hp()
 end
 
 function EnemyHealthBar:alive()
