@@ -1,6 +1,5 @@
 Hooks:PostHook(HUDManager, "init_finalize", "init_finalize_enemy_health_bars", function (self)
-	local hud = managers.hud:script(PlayerBase.PLAYER_INFO_HUD_FULLSCREEN_PD2)
-	self._healthbar_panel = self._healthbar_panel or hud and hud.panel
+	self._healthbar_panel = self._healthbar_panel or managers.hud:panel(PlayerBase.PLAYER_INFO_HUD_FULLSCREEN_PD2)
 
 	self._next_unit_raycast_t = 0
 
