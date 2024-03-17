@@ -16,7 +16,8 @@ if not FloatingHealthbars then
 		settings = {
 			variant = "default",
 			fill_direction = 1,
-			scale_by_hp = false,
+			scale_type = 1,
+			max_scale = 2,
 			width_by_text = false,
 			width = 128,
 			height = 20,
@@ -28,9 +29,36 @@ if not FloatingHealthbars then
 			hp_y_offset = 1,
 			allcaps = false,
 			font = 1,
-			outline = true
+			outline = true,
+			enemies = true,
+			jokers = true,
+			civilians = true,
+			hostages = true,
+			turrets = true
 		}
 	}
+
+	function FloatingHealthbars:character_slot_mask()
+		local slots = {}
+		if self.settings.enemies then
+			table.insert(slots, 12)
+			table.insert(slots, 13)
+		end
+		if self.settings.jokers then
+			table.insert(slots, 16)
+		end
+		if self.settings.civilians then
+			table.insert(slots, 21)
+		end
+		if self.settings.hostages then
+			table.insert(slots, 22)
+		end
+		if self.settings.turrets then
+			table.insert(slots, 25)
+			table.insert(slots, 26)
+		end
+		return World:make_slot_mask(unpack(slots))
+	end
 
 	if not file.DirectoryExists(FloatingHealthbars.save_path) then
 		file.CreateDirectory(FloatingHealthbars.save_path)
@@ -65,13 +93,17 @@ if not FloatingHealthbars then
 
 	Hooks:Add("MenuManagerBuildCustomMenus", "MenuManagerBuildCustomMenusFloatingHealthbars", function(_, nodes)
 
-		local width_menu_item
+		local width_menu_item, max_scale_menu_item
 		local menu_id = "floating_healthbars"
+		local menu_id_units = "floating_healthbars_units"
+
 		MenuHelper:NewMenu(menu_id)
+		MenuHelper:NewMenu(menu_id_units)
 
 		function MenuCallbackHandler:floating_healthbars_value(item)
 			local value = item:value()
 			FloatingHealthbars.settings[item:name()] = value
+			max_scale_menu_item:set_enabled(FloatingHealthbars.settings.scale_type > 1)
 		end
 
 		function MenuCallbackHandler:floating_healthbars_toggle(item)
@@ -79,11 +111,17 @@ if not FloatingHealthbars then
 			width_menu_item:set_enabled(not FloatingHealthbars.settings.width_by_text)
 		end
 
+		function MenuCallbackHandler:floating_healthbars_toggle_unit(item)
+			self:floating_healthbars_toggle(item)
+			if managers.hud then
+				managers.hud:reset_floating_healthbar()
+			end
+		end
+
 		function MenuCallbackHandler:floating_healthbars_save()
 			io.save_as_json(FloatingHealthbars.settings, FloatingHealthbars.save_file)
-			if managers.hud and managers.hud._unit_healthbar and managers.hud._unit_healthbar:alive() then
-				managers.hud._unit_healthbar:destroy()
-				managers.hud._unit_healthbar = nil
+			if managers.hud then
+				managers.hud:reset_floating_healthbar()
 			end
 		end
 
@@ -116,22 +154,12 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddToggle({
 			menu_id = menu_id,
-			id = "scale_by_hp",
-			title = "menu_floating_healthbars_scale_by_hp",
-			desc = "menu_floating_healthbars_scale_by_hp_desc",
-			value = FloatingHealthbars.settings.scale_by_hp,
-			callback = "floating_healthbars_toggle",
-			priority = 97
-		})
-
-		MenuHelper:AddToggle({
-			menu_id = menu_id,
 			id = "width_by_text",
 			title = "menu_floating_healthbars_width_by_text",
 			desc = "menu_floating_healthbars_width_by_text_desc",
 			value = FloatingHealthbars.settings.width_by_text,
 			callback = "floating_healthbars_toggle",
-			priority = 96
+			priority = 97
 		})
 
 		width_menu_item = MenuHelper:AddSlider({
@@ -146,7 +174,7 @@ if not FloatingHealthbars then
 			show_value = true,
 			display_precision = 0,
 			callback = "floating_healthbars_value",
-			priority = 95
+			priority = 96
 		})
 
 		MenuHelper:AddSlider({
@@ -160,7 +188,7 @@ if not FloatingHealthbars then
 			show_value = true,
 			display_precision = 0,
 			callback = "floating_healthbars_value",
-			priority = 94
+			priority = 95
 		})
 
 		MenuHelper:AddDivider({
@@ -305,7 +333,101 @@ if not FloatingHealthbars then
 			priority = 67
 		})
 
+		MenuHelper:AddDivider({
+			menu_id = menu_id,
+			size = 16,
+			priority = 60
+		})
+
+		MenuHelper:AddMultipleChoice({
+			menu_id = menu_id,
+			id = "scale_type",
+			title = "menu_floating_healthbars_scale_type",
+			desc = "menu_floating_healthbars_scale_type_desc",
+			items = { "menu_floating_healthbars_scale_none", "menu_floating_healthbars_scale_total_hp", "menu_floating_healthbars_scale_special" },
+			value = FloatingHealthbars.settings.scale_type,
+			callback = "floating_healthbars_value",
+			priority = 59
+		})
+
+		max_scale_menu_item = MenuHelper:AddSlider({
+			menu_id = menu_id,
+			id = "max_scale",
+			title = "menu_floating_healthbars_max_scale",
+			desc = "menu_floating_healthbars_max_scale_desc",
+			disabled = FloatingHealthbars.settings.scale_type == 1,
+			value = FloatingHealthbars.settings.max_scale,
+			min = 1,
+			max = 3,
+			step = 0.05,
+			show_value = true,
+			display_precision = 2,
+			callback = "floating_healthbars_value",
+			priority = 58
+		})
+
+		MenuHelper:AddDivider({
+			menu_id = menu_id,
+			size = 16,
+			priority = 50
+		})
+
+		MenuHelper:AddButton({
+			menu_id = menu_id,
+			id = "units",
+			title = "menu_floating_healthbars_units",
+			desc = "menu_floating_healthbars_units_desc",
+			next_node = menu_id_units,
+			priority = 49
+		})
+
+		MenuHelper:AddToggle({
+			menu_id = menu_id_units,
+			id = "enemies",
+			title = "menu_floating_healthbars_enemies",
+			value = FloatingHealthbars.settings.enemies,
+			callback = "floating_healthbars_toggle_unit",
+			priority = 10
+		})
+
+		MenuHelper:AddToggle({
+			menu_id = menu_id_units,
+			id = "jokers",
+			title = "menu_floating_healthbars_jokers",
+			value = FloatingHealthbars.settings.jokers,
+			callback = "floating_healthbars_toggle_unit",
+			priority = 9
+		})
+
+		MenuHelper:AddToggle({
+			menu_id = menu_id_units,
+			id = "civilians",
+			title = "menu_floating_healthbars_civilians",
+			value = FloatingHealthbars.settings.civilians,
+			callback = "floating_healthbars_toggle_unit",
+			priority = 8
+		})
+
+		MenuHelper:AddToggle({
+			menu_id = menu_id_units,
+			id = "hostages",
+			title = "menu_floating_healthbars_hostages",
+			value = FloatingHealthbars.settings.hostages,
+			callback = "floating_healthbars_toggle_unit",
+			priority = 7
+		})
+
+		MenuHelper:AddToggle({
+			menu_id = menu_id_units,
+			id = "turrets",
+			title = "menu_floating_healthbars_turrets",
+			value = FloatingHealthbars.settings.turrets,
+			callback = "floating_healthbars_toggle_unit",
+			priority = 6
+		})
+
 		nodes[menu_id] = MenuHelper:BuildMenu(menu_id, { area_bg = "half", back_callback = "floating_healthbars_save" })
+		nodes[menu_id_units] = MenuHelper:BuildMenu(menu_id_units, { area_bg = "half", back_callback = "floating_healthbars_save" })
 		MenuHelper:AddMenuItem(nodes["blt_options"], menu_id, "menu_floating_healthbars")
 	end)
 

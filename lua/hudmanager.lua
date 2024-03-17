@@ -1,10 +1,19 @@
+function HUDManager:reset_floating_healthbar()
+	if self._unit_healthbar and self._unit_healthbar:alive() then
+		self._unit_healthbar:destroy()
+		self._unit_healthbar = nil
+	end
+
+	self._unit_slotmask_no_walls = FloatingHealthbars:character_slot_mask()
+	self._unit_slotmask = self._unit_slotmask_no_walls + managers.slot:get_mask("bullet_blank_impact_targets")
+end
+
 Hooks:PostHook(HUDManager, "init_finalize", "init_finalize_enemy_health_bars", function (self)
 	self._healthbar_panel = self._healthbar_panel or managers.hud:panel(PlayerBase.PLAYER_INFO_HUD_FULLSCREEN_PD2)
 
 	self._next_unit_raycast_t = 0
 
-	self._unit_slotmask = managers.slot:get_mask("bullet_impact_targets") - managers.slot:get_mask("all_criminals", "corpses")
-	self._unit_slotmask_no_walls = self._unit_slotmask - managers.slot:get_mask("bullet_blank_impact_targets")
+	self:reset_floating_healthbar()
 end)
 
 local mvec_add = mvector3.add

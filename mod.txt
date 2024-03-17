@@ -6,7 +6,7 @@
 	"vr_disabled" : true,
 	"color" : "0.043 0.808 0.6",
 	"image" : "mod.png",
-	"version" : "1.1.0",
+	"version" : "1.2.0",
 	"dependencies" : {
 		"pd2-hoplib" : { "meta": "https://updates.hoppip.at/pd2-hoplib" }
 	},

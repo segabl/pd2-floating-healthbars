@@ -8,6 +8,8 @@ local function set_texture_rect(bitmap, x, y, w, h)
 end
 
 function EnemyHealthBar:init(panel, unit)
+	local unit_info = HopLib:unit_info_manager():get_info(unit)
+
 	self._unit = unit
 	self._ext_damage = unit:character_damage()
 	self._ext_movement = unit:movement()
@@ -21,11 +23,12 @@ function EnemyHealthBar:init(panel, unit)
 	local center_y = math.round(self._panel:h() * 0.5)
 
 	local scale = 1
-	if FloatingHealthbars.settings.scale_by_hp then
-		scale = math.min(math.max(1, (unit:character_damage()._HEALTH_INIT or 4) / (tweak_data.character.swat.HEALTH_INIT * 0.5)) ^ 0.15, 2)
+	if FloatingHealthbars.settings.scale_type == 2 then
+		scale = math.clamp(((unit:character_damage()._HEALTH_INIT or 4) / (tweak_data.character.swat.HEALTH_INIT * 0.5)) ^ 0.15, 1, FloatingHealthbars.settings.max_scale)
+	elseif FloatingHealthbars.settings.scale_type == 3 then
+		scale = unit_info and (unit_info:is_special() or unit_info:is_boss()) and FloatingHealthbars.settings.max_scale or 1
 	end
 
-	local unit_info = HopLib:unit_info_manager():get_info(unit)
 	local unit_name = unit_info and unit_info:nickname() or (unit:base()._tweak_table or "Unknown"):pretty()
 	self._name_text = self._panel:text({
 		layer = 3,
