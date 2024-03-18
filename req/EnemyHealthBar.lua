@@ -24,7 +24,8 @@ function EnemyHealthBar:init(panel, unit)
 
 	local scale = 1
 	if FloatingHealthbars.settings.scale_type == 2 then
-		scale = math.clamp(((unit:character_damage()._HEALTH_INIT or 4) / (tweak_data.character.swat.HEALTH_INIT * 0.5)) ^ 0.15, 1, FloatingHealthbars.settings.max_scale)
+		local health_factor = ((unit:character_damage()._HEALTH_INIT or 4) / (tweak_data.character.swat.HEALTH_INIT * 0.5)) ^ 0.15
+		scale = math.map_range_clamped(health_factor, 1, 2, 1, FloatingHealthbars.settings.max_scale)
 	elseif FloatingHealthbars.settings.scale_type == 3 then
 		scale = unit_info and (unit_info:is_special() or unit_info:is_boss()) and FloatingHealthbars.settings.max_scale or 1
 	end
@@ -50,10 +51,8 @@ function EnemyHealthBar:init(panel, unit)
 	local _, _, w, h = self._hp_text:text_rect()
 	self._hp_text:set_size(w, h)
 
-	local healthbar_path = FloatingHealthbars.variants[FloatingHealthbars.settings.variant] or FloatingHealthbars.variants.default
-
-	self._health_width = math.round(math.max(FloatingHealthbars.settings.width_by_text and self._name_text:w() or scale * FloatingHealthbars.settings.width, 8))
-	self._health_height = math.round(scale * math.max(FloatingHealthbars.settings.height, 8))
+	self._health_width = math.round(math.max(FloatingHealthbars.settings.width_by_text and self._name_text:w() or scale * FloatingHealthbars.settings.width, 0))
+	self._health_height = math.round(scale * math.max(FloatingHealthbars.settings.height, 0))
 
 	-- Background
 	local bg = self._panel:panel({
@@ -63,7 +62,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	local bg_left = bg:bitmap({
 		layer = -1,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		w = self._health_height,
 		h = self._health_height,
 	})
@@ -71,7 +70,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	local bg_right = bg:bitmap({
 		layer = -1,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		x = self._health_width + self._health_height,
 		w = self._health_height,
 		h = self._health_height,
@@ -80,7 +79,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	local bg_center = bg:bitmap({
 		layer = -1,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		x = self._health_height,
 		w = self._health_width,
 		h = self._health_height,
@@ -95,7 +94,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	local fg_left = fg:bitmap({
 		layer = 1,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		w = self._health_height,
 		h = self._health_height,
 	})
@@ -103,7 +102,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	local fg_right = fg:bitmap({
 		layer = 1,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		x = self._health_width + self._health_height,
 		w = self._health_height,
 		h = self._health_height,
@@ -112,7 +111,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	local fg_center = fg:bitmap({
 		layer = 1,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		x = self._health_height,
 		w = self._health_width,
 		h = self._health_height,
@@ -127,7 +126,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	self._hp_left = self._hp_panel:bitmap({
 		layer = 0,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		w = self._health_height,
 		h = self._health_height,
 	})
@@ -135,7 +134,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	self._hp_right = self._hp_panel:bitmap({
 		layer = 0,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		x = self._health_width + self._health_height,
 		w = self._health_height,
 		h = self._health_height,
@@ -144,7 +143,7 @@ function EnemyHealthBar:init(panel, unit)
 
 	self._hp_center = self._hp_panel:bitmap({
 		layer = 0,
-		texture = healthbar_path,
+		texture = FloatingHealthbars.texture_path,
 		x = self._health_height,
 		w = self._health_width,
 		h = self._health_height,

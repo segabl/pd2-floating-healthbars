@@ -6,6 +6,10 @@ function HUDManager:reset_floating_healthbar()
 
 	self._unit_slotmask_no_walls = FloatingHealthbars:character_slot_mask()
 	self._unit_slotmask = self._unit_slotmask_no_walls + managers.slot:get_mask("bullet_blank_impact_targets")
+
+	local texture_path = Idstring(FloatingHealthbars.texture_path)
+	BLT.AssetManager:CreateEntry(texture_path, Idstring("texture"), FloatingHealthbars.variants[FloatingHealthbars.settings.variant])
+	Application:reload_textures({ texture_path })
 end
 
 Hooks:PostHook(HUDManager, "init_finalize", "init_finalize_enemy_health_bars", function (self)
@@ -39,7 +43,7 @@ Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self,
 	local cam = player:camera()
 	local from = cam:position()
 	mvec_set(to_vec, cam:forward())
-	mvec_mul(to_vec, 10000)
+	mvec_mul(to_vec, player:movement():current_state():in_steelsight() and FloatingHealthbars.settings.max_distance_ads or FloatingHealthbars.settings.max_distance)
 	mvec_add(to_vec, from)
 	local ray1 = World:raycast("ray", from, to_vec, "slot_mask", self._unit_slotmask_no_walls, "sphere_cast_radius", 30)
 	local ray2 = World:raycast("ray", from, to_vec, "slot_mask", self._unit_slotmask)
