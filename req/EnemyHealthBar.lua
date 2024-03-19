@@ -1,5 +1,10 @@
 EnemyHealthBar = EnemyHealthBar or class()
 EnemyHealthBar.PANEL_FADE_TIME = 0.25
+EnemyHealthBar.FILL_DIRECTION_ALIGNMENT = {
+	"left",
+	"right",
+	"center"
+}
 
 local function set_texture_rect(bitmap, x, y, w, h)
 	local tex_w, tex_h = bitmap:texture_width(), bitmap:texture_height()
@@ -77,14 +82,32 @@ function EnemyHealthBar:init(panel, unit)
 	})
 	set_texture_rect(bg_right, 96, 0, 32, 32)
 
-	local bg_center = bg:bitmap({
-		layer = -1,
-		texture = FloatingHealthbars.texture_path,
-		x = self._health_height,
-		w = self._health_width,
-		h = self._health_height,
-	})
-	set_texture_rect(bg_center, 48, 0, 32, 32)
+	if FloatingHealthbars.settings.fill_type < 3 then
+		local bg_center = bg:bitmap({
+			layer = -1,
+			texture = FloatingHealthbars.texture_path,
+			x = self._health_height,
+			w = self._health_width,
+			h = self._health_height,
+		})
+		set_texture_rect(bg_center, 48, 0, 32, 32)
+	else
+		local bg_center = bg:panel({
+			layer = -1,
+			x = self._health_height,
+			w = self._health_width,
+			h = self._health_height,
+		})
+		for x = 0, self._health_width, self._health_height do
+			local tile = bg_center:bitmap({
+				texture = FloatingHealthbars.texture_path,
+				x = x,
+				w = self._health_height,
+				h = self._health_height
+			})
+			set_texture_rect(tile, 48, 0, 32, 32)
+		end
+	end
 
 	-- Foreground
 	local fg = self._panel:panel({
@@ -109,14 +132,32 @@ function EnemyHealthBar:init(panel, unit)
 	})
 	set_texture_rect(fg_right, 96, 96, 32, 32)
 
-	local fg_center = fg:bitmap({
-		layer = 1,
-		texture = FloatingHealthbars.texture_path,
-		x = self._health_height,
-		w = self._health_width,
-		h = self._health_height,
-	})
-	set_texture_rect(fg_center, 48, 96, 32, 32)
+	if FloatingHealthbars.settings.fill_type < 3 then
+		local fg_center = fg:bitmap({
+			layer = 1,
+			texture = FloatingHealthbars.texture_path,
+			x = self._health_height,
+			w = self._health_width,
+			h = self._health_height,
+		})
+		set_texture_rect(fg_center, 48, 96, 32, 32)
+	else
+		local fg_center = fg:panel({
+			layer = 1,
+			x = self._health_height,
+			w = self._health_width,
+			h = self._health_height,
+		})
+		for x = 0, self._health_width, self._health_height do
+			local tile = fg_center:bitmap({
+				texture = FloatingHealthbars.texture_path,
+				x = x,
+				w = self._health_height,
+				h = self._health_height
+			})
+			set_texture_rect(tile, 48, 96, 32, 32)
+		end
+	end
 
 	-- Healthbar
 	self._hp_panel = self._panel:panel({
@@ -141,14 +182,34 @@ function EnemyHealthBar:init(panel, unit)
 	})
 	set_texture_rect(self._hp_right, 96, 48, 32, 32)
 
-	self._hp_center = self._hp_panel:bitmap({
+	self._hp_center = self._hp_panel:panel({
 		layer = 0,
-		texture = FloatingHealthbars.texture_path,
 		x = self._health_height,
 		w = self._health_width,
 		h = self._health_height,
 	})
-	set_texture_rect(self._hp_center, 48, 48, 32, 32)
+	if FloatingHealthbars.settings.fill_type < 3 then
+		local hp_center_bitmap = self._hp_center:bitmap({
+			texture = FloatingHealthbars.texture_path,
+			w = self._health_width,
+			h = self._health_height,
+			halign = FloatingHealthbars.settings.fill_type == 2 and self.FILL_DIRECTION_ALIGNMENT[FloatingHealthbars.settings.fill_direction] or "grow"
+		})
+		set_texture_rect(hp_center_bitmap, 48, 48, 32, 32)
+	else
+		local hp_center_bitmap = self._hp_center:panel({
+			halign = self.FILL_DIRECTION_ALIGNMENT[FloatingHealthbars.settings.fill_direction]
+		})
+		for x = 0, self._health_width, self._health_height do
+			local tile = hp_center_bitmap:bitmap({
+				texture = FloatingHealthbars.texture_path,
+				x = x,
+				w = self._health_height,
+				h = self._health_height
+			})
+			set_texture_rect(tile, 48, 48, 32, 32)
+		end
+	end
 
 	bg:set_center(center_x, center_y)
 	fg:set_center(center_x, center_y)

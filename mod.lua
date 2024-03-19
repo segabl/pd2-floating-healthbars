@@ -17,6 +17,7 @@ if not FloatingHealthbars then
 		settings = {
 			variant = "default",
 			fill_direction = 1,
+			fill_type = 1,
 			scale_type = 1,
 			max_scale = 2,
 			width_by_text = false,
@@ -155,6 +156,16 @@ if not FloatingHealthbars then
 			priority = 98
 		})
 
+		MenuHelper:AddMultipleChoice({
+			menu_id = menu_id,
+			id = "fill_type",
+			title = "menu_floating_healthbars_fill_type",
+			items = { "menu_floating_healthbars_stretched", "menu_floating_healthbars_cropped", "menu_floating_healthbars_tiled" },
+			value = FloatingHealthbars.settings.fill_type,
+			callback = "floating_healthbars_value",
+			priority = 97
+		})
+
 		MenuHelper:AddToggle({
 			menu_id = menu_id,
 			id = "width_by_text",
@@ -162,7 +173,7 @@ if not FloatingHealthbars then
 			desc = "menu_floating_healthbars_width_by_text_desc",
 			value = FloatingHealthbars.settings.width_by_text,
 			callback = "floating_healthbars_toggle",
-			priority = 97
+			priority = 96
 		})
 
 		width_menu_item = MenuHelper:AddSlider({
@@ -177,7 +188,7 @@ if not FloatingHealthbars then
 			show_value = true,
 			display_precision = 0,
 			callback = "floating_healthbars_value",
-			priority = 96
+			priority = 95
 		})
 
 		MenuHelper:AddSlider({
@@ -191,12 +202,12 @@ if not FloatingHealthbars then
 			show_value = true,
 			display_precision = 0,
 			callback = "floating_healthbars_value",
-			priority = 95
+			priority = 94
 		})
 
 		MenuHelper:AddDivider({
 			menu_id = menu_id,
-			size = 16,
+			size = 12,
 			priority = 90
 		})
 
@@ -230,7 +241,7 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddDivider({
 			menu_id = menu_id,
-			size = 16,
+			size = 12,
 			priority = 80
 		})
 
@@ -284,7 +295,7 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddDivider({
 			menu_id = menu_id,
-			size = 16,
+			size = 12,
 			priority = 70
 		})
 
@@ -338,7 +349,7 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddDivider({
 			menu_id = menu_id,
-			size = 16,
+			size = 12,
 			priority = 60
 		})
 
@@ -371,7 +382,7 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddDivider({
 			menu_id = menu_id,
-			size = 16,
+			size = 12,
 			priority = 50
 		})
 
@@ -409,7 +420,7 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddDivider({
 			menu_id = menu_id,
-			size = 16,
+			size = 12,
 			priority = 40
 		})
 
