@@ -6,10 +6,6 @@ function HUDManager:reset_floating_healthbar()
 
 	self._unit_slotmask_no_walls = FloatingHealthbars:character_slot_mask()
 	self._unit_slotmask = self._unit_slotmask_no_walls + managers.slot:get_mask("bullet_blank_impact_targets")
-
-	local texture_path = Idstring(FloatingHealthbars.texture_path)
-	BLT.AssetManager:CreateEntry(texture_path, Idstring("texture"), FloatingHealthbars.variants[FloatingHealthbars.settings.variant])
-	Application:reload_textures({ texture_path })
 end
 
 Hooks:PostHook(HUDManager, "init_finalize", "init_finalize_enemy_health_bars", function (self)

@@ -64,28 +64,46 @@ if not FloatingHealthbars then
 		return World:make_slot_mask(unpack(slots))
 	end
 
-	if not file.DirectoryExists(FloatingHealthbars.save_path) then
-		file.CreateDirectory(FloatingHealthbars.save_path)
-	end
+	function FloatingHealthbars:update_healthbar(refresh)
+		local ids_texture = Idstring("texture")
+		local ids_path = Idstring(self.texture_path)
 
-	local function add_variants(asset_path)
-		for _, file in pairs(file.GetFiles(asset_path)) do
-			local name, ext = file:match("^(.+)%.(.+)$")
-			if ext == "dds" or ext == "texture" then
-				FloatingHealthbars.variants[name] = asset_path .. file
-			end
+		if refresh or not DB:has(ids_texture, ids_path) then
+			BLT.AssetManager:CreateEntry(ids_path, ids_texture, self.variants[self.settings.variant])
+		end
+
+		if refresh then
+			Application:reload_textures({ ids_path })
 		end
 	end
-	add_variants(FloatingHealthbars.mod_path .. "assets/")
-	add_variants(FloatingHealthbars.save_path)
 
-	if io.file_is_readable(FloatingHealthbars.save_file) then
-		local data = io.load_as_json(FloatingHealthbars.save_file)
-		for k, v in pairs(FloatingHealthbars.settings) do
-			if type(data[k]) == type(v) then
-				FloatingHealthbars.settings[k] = data[k]
+	function FloatingHealthbars:init()
+		if not file.DirectoryExists(self.save_path) then
+			file.CreateDirectory(self.save_path)
+		end
+
+		if io.file_is_readable(self.save_file) then
+			local data = io.load_as_json(self.save_file)
+			for k, v in pairs(self.settings) do
+				if type(data[k]) == type(v) then
+					self.settings[k] = data[k]
+				end
 			end
 		end
+
+		local function add_variants(asset_path)
+			for _, file in pairs(file.GetFiles(asset_path)) do
+				local name, ext = file:match("^(.+)%.(.+)$")
+				if ext == "dds" or ext == "texture" then
+					self.variants[name] = asset_path .. file
+				end
+			end
+		end
+
+		add_variants(self.mod_path .. "assets/")
+		add_variants(self.save_path)
+
+		self:update_healthbar()
 	end
 
 	Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInitFloatingHealthbars", function (loc)
@@ -108,6 +126,11 @@ if not FloatingHealthbars then
 			if managers.hud then
 				managers.hud:reset_floating_healthbar()
 			end
+		end
+
+		function MenuCallbackHandler:floating_healthbars_value_variant(item)
+			self:floating_healthbars_value(item)
+			FloatingHealthbars:update_healthbar(managers.hud and true)
 		end
 
 		function MenuCallbackHandler:floating_healthbars_toggle(item)
@@ -142,7 +165,7 @@ if not FloatingHealthbars then
 			item_values = variants,
 			localized_items = false,
 			value = FloatingHealthbars.settings.variant,
-			callback = "floating_healthbars_value",
+			callback = "floating_healthbars_value_variant",
 			priority = 99
 		})
 
@@ -482,6 +505,8 @@ if not FloatingHealthbars then
 		nodes[menu_id_units] = MenuHelper:BuildMenu(menu_id_units, { area_bg = "half", back_callback = "floating_healthbars_save" })
 		MenuHelper:AddMenuItem(nodes["blt_options"], menu_id, "menu_floating_healthbars")
 	end)
+
+	FloatingHealthbars:init()
 
 end
 
