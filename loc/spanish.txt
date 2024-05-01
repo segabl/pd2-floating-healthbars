@@ -44,7 +44,7 @@
 	"menu_floating_healthbars_units" : "Unit types",
 	"menu_floating_healthbars_units_desc" : "Enable or disable healthbars for different unit types",
 	"menu_floating_healthbars_enemies" : "Enemies",
-	"menu_floating_healthbars_jokers" : "Jokers",
+	"menu_floating_healthbars_friendlies" : "Friendlies",
 	"menu_floating_healthbars_civilians" : "Civilians",
 	"menu_floating_healthbars_hostages" : "Hostages",
 	"menu_floating_healthbars_turrets" : "Turrets"

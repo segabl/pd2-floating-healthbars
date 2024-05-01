@@ -53,7 +53,7 @@ Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self,
 	end
 
 	local dmg = alive(unit) and unit:character_damage()
-	if not self._unit_healthbar and dmg and dmg.health_ratio and not dmg._dead then
+	if not self._unit_healthbar and dmg and dmg.health_ratio and not dmg._dead and not unit:unit_data().name_label_id then
 		self._unit_healthbar = unit:unit_data()._healthbar or EnemyHealthBar:new(self._healthbar_panel, unit)
 		self._unit_healthbar:show()
 	end

@@ -35,7 +35,7 @@ if not FloatingHealthbars then
 			max_distance = 10000,
 			max_distance_ads = 10000,
 			enemies = true,
-			jokers = true,
+			friendlies = true,
 			civilians = true,
 			hostages = true,
 			turrets = true
@@ -48,7 +48,7 @@ if not FloatingHealthbars then
 			table.insert(slots, 12)
 			table.insert(slots, 13)
 		end
-		if self.settings.jokers then
+		if self.settings.friendlies then
 			table.insert(slots, 16)
 		end
 		if self.settings.civilians then
@@ -467,9 +467,9 @@ if not FloatingHealthbars then
 
 		MenuHelper:AddToggle({
 			menu_id = menu_id_units,
-			id = "jokers",
-			title = "menu_floating_healthbars_jokers",
-			value = FloatingHealthbars.settings.jokers,
+			id = "friendlies",
+			title = "menu_floating_healthbars_friendlies",
+			value = FloatingHealthbars.settings.friendlies,
 			callback = "floating_healthbars_toggle_unit",
 			priority = 9
 		})
