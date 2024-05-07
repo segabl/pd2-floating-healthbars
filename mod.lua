@@ -61,7 +61,7 @@ if not FloatingHealthbars then
 			table.insert(slots, 25)
 			table.insert(slots, 26)
 		end
-		return World:make_slot_mask(unpack(slots))
+		return World:make_slot_mask(unpack(slots)), #slots == 0
 	end
 
 	function FloatingHealthbars:update_healthbar(refresh)

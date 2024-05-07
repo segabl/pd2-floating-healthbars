@@ -4,7 +4,7 @@ function HUDManager:reset_floating_healthbar()
 		self._unit_healthbar = nil
 	end
 
-	self._unit_slotmask_no_walls = FloatingHealthbars:character_slot_mask()
+	self._unit_slotmask_no_walls, self._unit_slot_mask_empty = FloatingHealthbars:character_slot_mask()
 	self._unit_slotmask = self._unit_slotmask_no_walls + managers.slot:get_mask("bullet_blank_impact_targets")
 end
 
@@ -20,7 +20,7 @@ local mvec_add = mvector3.add
 local mvec_mul = mvector3.multiply
 local mvec_set = mvector3.set
 local to_vec = Vector3()
-Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self, t, dt)
+Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self, t)
 	if self._next_unit_raycast_t > t then
 		return
 	end
@@ -28,7 +28,7 @@ Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self,
 	self._next_unit_raycast_t = t + 0.05
 
 	local player = managers.player:local_player()
-	if not alive(player) then
+	if not alive(player) or self._unit_slot_mask_empty then
 		if self._unit_healthbar and self._unit_healthbar:alive() then
 			self._unit_healthbar:destroy()
 			self._unit_healthbar = nil
@@ -45,7 +45,9 @@ Hooks:PostHook(HUDManager, "update", "update_enemy_health_bars", function (self,
 	local ray2 = World:raycast("ray", from, to_vec, "slot_mask", self._unit_slotmask)
 
 	local unit = ray1 and (not ray2 or ray2.unit == ray1.unit or ray2.distance > ray1.distance + 60) and ray1.unit or ray2 and ray2.unit
-	unit = unit and unit:in_slot(8) and unit:parent() or unit
+	if unit and unit:in_slot(8) and unit:parent() and unit:parent():in_slot(self._unit_slotmask_no_walls) then
+		unit = unit:parent()
+	end
 
 	if self._unit_healthbar and (self._unit_healthbar._unit ~= unit or not self._unit_healthbar:alive()) then
 		self._unit_healthbar:hide()
