@@ -367,7 +367,7 @@ function EnemyHealthBar:update(t, dt)
 		local pos = self._ext_movement._obj_head and self._ext_movement._obj_head:position() or self._ext_movement:m_head_pos()
 
 		mvector3.set(tmp_vec, pos)
-		mvector3.add_scaled(tmp_vec, math.UP, 30)
+		mvector3.add_scaled(tmp_vec, math.UP, FloatingHealthbars.settings.vertical_offset)
 
 		local screen_pos = ws:world_to_screen(cam, tmp_vec)
 		self._panel:set_center_x(math.round(screen_pos.x))

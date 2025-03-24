@@ -34,6 +34,7 @@ if not FloatingHealthbars then
 			outline = true,
 			max_distance = 10000,
 			max_distance_ads = 10000,
+			vertical_offset = 30,
 			enemies = true,
 			friendlies = true,
 			civilians = true,
@@ -439,6 +440,21 @@ if not FloatingHealthbars then
 			display_scale = 0.01,
 			callback = "floating_healthbars_value",
 			priority = 48
+		})
+
+		MenuHelper:AddSlider({
+			menu_id = menu_id,
+			id = "vertical_offset",
+			title = "menu_floating_healthbars_vertical_offset",
+			desc = "menu_floating_healthbars_vertical_offset_desc",
+			value = FloatingHealthbars.settings.vertical_offset,
+			min = -60,
+			max = 60,
+			step = 5,
+			show_value = true,
+			display_precision = 1,
+			callback = "floating_healthbars_value",
+			priority = 47
 		})
 
 		MenuHelper:AddDivider({
