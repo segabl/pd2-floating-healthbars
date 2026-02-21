@@ -13,6 +13,7 @@ local function set_texture_rect(bitmap, x, y, w, h)
 end
 
 function EnemyHealthBar:init(panel, unit)
+	local settings = FloatingHealthbars.settings
 	local unit_info = HopLib:unit_info_manager():get_info(unit)
 
 	self._unit = unit
@@ -27,20 +28,22 @@ function EnemyHealthBar:init(panel, unit)
 	local center_x = math.round(self._panel:w() * 0.5)
 	local center_y = math.round(self._panel:h() * 0.5)
 
-	local scale = 1
-	if FloatingHealthbars.settings.scale_type == 2 then
+	local scale_x, scale_y = 1, 1
+	if settings.scale_type == 2 then
 		local health_factor = ((unit:character_damage()._HEALTH_INIT or 4) / (tweak_data.character.swat.HEALTH_INIT * 0.5)) ^ 0.15
-		scale = math.map_range_clamped(health_factor, 1, 2, 1, FloatingHealthbars.settings.max_scale)
-	elseif FloatingHealthbars.settings.scale_type == 3 then
-		scale = unit_info and (unit_info:is_special() or unit_info:is_boss()) and FloatingHealthbars.settings.max_scale or 1
+		scale_x = math.map_range_clamped(health_factor, 1, 2, 1, settings.max_scale_x)
+		scale_y = math.map_range_clamped(health_factor, 1, 2, 1, settings.max_scale_y)
+	elseif settings.scale_type == 3 then
+		scale_x = unit_info and (unit_info:is_special() or unit_info:is_boss()) and settings.max_scale_x or 1
+		scale_y = unit_info and (unit_info:is_special() or unit_info:is_boss()) and settings.max_scale_y or 1
 	end
 
 	local unit_name = unit_info and unit_info:nickname() or (unit:base()._tweak_table or "Unknown"):pretty()
 	self._name_text = self._panel:text({
 		layer = 3,
-		text = FloatingHealthbars.settings.allcaps and unit_name:upper() or unit_name,
-		font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1],
-		font_size = FloatingHealthbars.settings.name_size * scale,
+		text = settings.allcaps and unit_name:upper() or unit_name,
+		font = FloatingHealthbars.fonts[settings.font] or FloatingHealthbars.fonts[1],
+		font_size = settings.name_size * scale_y,
 		color = Color.white
 	})
 	local _, _, w, h = self._name_text:text_rect()
@@ -49,15 +52,21 @@ function EnemyHealthBar:init(panel, unit)
 	self._hp_text = self._panel:text({
 		layer = 3,
 		text = "80 / 80",
-		font = FloatingHealthbars.fonts[FloatingHealthbars.settings.font] or FloatingHealthbars.fonts[1],
-		font_size = FloatingHealthbars.settings.hp_size * scale,
+		font = FloatingHealthbars.fonts[settings.font] or FloatingHealthbars.fonts[1],
+		font_size = settings.hp_size * scale_y,
 		color = Color.white
 	})
 	local _, _, w, h = self._hp_text:text_rect()
 	self._hp_text:set_size(w, h)
 
-	self._health_width = math.round(math.max(FloatingHealthbars.settings.width_by_text and self._name_text:w() or scale * FloatingHealthbars.settings.width, 0))
-	self._health_height = math.round(scale * math.max(FloatingHealthbars.settings.height, 0))
+	local width
+	if settings.width_by_text then
+		width = math.clamp(self._name_text:w() + settings.width_padding, settings.min_width, settings.max_width)
+	else
+		width = scale_x * settings.width
+	end
+	self._health_width = math.round(math.max(width, 0))
+	self._health_height = math.round(scale_y * math.max(settings.height, 0))
 
 	-- Background
 	local bg = self._panel:panel({
@@ -82,7 +91,7 @@ function EnemyHealthBar:init(panel, unit)
 	})
 	set_texture_rect(bg_right, 96, 0, 32, 32)
 
-	if FloatingHealthbars.settings.fill_type < 3 then
+	if settings.fill_type < 3 then
 		local bg_center = bg:bitmap({
 			layer = -1,
 			texture = FloatingHealthbars.texture_path,
@@ -132,7 +141,7 @@ function EnemyHealthBar:init(panel, unit)
 	})
 	set_texture_rect(fg_right, 96, 96, 32, 32)
 
-	if FloatingHealthbars.settings.fill_type < 3 then
+	if settings.fill_type < 3 then
 		local fg_center = fg:bitmap({
 			layer = 1,
 			texture = FloatingHealthbars.texture_path,
@@ -188,17 +197,17 @@ function EnemyHealthBar:init(panel, unit)
 		w = self._health_width,
 		h = self._health_height,
 	})
-	if FloatingHealthbars.settings.fill_type < 3 then
+	if settings.fill_type < 3 then
 		local hp_center_bitmap = self._hp_center:bitmap({
 			texture = FloatingHealthbars.texture_path,
 			w = self._health_width,
 			h = self._health_height,
-			halign = FloatingHealthbars.settings.fill_type == 2 and self.FILL_DIRECTION_ALIGNMENT[FloatingHealthbars.settings.fill_direction] or "grow"
+			halign = settings.fill_type == 2 and self.FILL_DIRECTION_ALIGNMENT[settings.fill_direction] or "grow"
 		})
 		set_texture_rect(hp_center_bitmap, 48, 48, 32, 32)
 	else
 		local hp_center_bitmap = self._hp_center:panel({
-			halign = self.FILL_DIRECTION_ALIGNMENT[FloatingHealthbars.settings.fill_direction]
+			halign = self.FILL_DIRECTION_ALIGNMENT[settings.fill_direction]
 		})
 		for x = 0, self._health_width, self._health_height do
 			local tile = hp_center_bitmap:bitmap({
@@ -215,12 +224,12 @@ function EnemyHealthBar:init(panel, unit)
 	fg:set_center(center_x, center_y)
 	self._hp_panel:set_center(center_x, center_y)
 
-	local x_off = self._name_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.name_x_offset * (self._hp_center:w() - self._name_text:w()) * 0.5
-	local y_off = FloatingHealthbars.settings.name_y_offset * (self._name_text:h() + self._hp_panel:h()) * 0.5
+	local x_off = self._name_text:w() >= self._hp_center:w() and 0 or settings.name_x_offset * (self._hp_center:w() - self._name_text:w()) * 0.5
+	local y_off = settings.name_y_offset * (self._name_text:h() + self._hp_panel:h()) * 0.5
 	self._name_text:set_center(center_x + x_off, center_y + y_off)
 
-	local x_off = self._hp_text:w() >= self._hp_center:w() and 0 or FloatingHealthbars.settings.hp_x_offset * (self._hp_center:w() - self._hp_text:w()) * 0.5
-	local y_off = FloatingHealthbars.settings.hp_y_offset * (self._hp_text:h() + self._hp_panel:h()) * 0.5
+	local x_off = self._hp_text:w() >= self._hp_center:w() and 0 or settings.hp_x_offset * (self._hp_center:w() - self._hp_text:w()) * 0.5
+	local y_off = settings.hp_y_offset * (self._hp_text:h() + self._hp_panel:h()) * 0.5
 	self._hp_text:set_center(center_x + x_off, center_y + y_off)
 
 	self:_update_outline(self._name_text)
